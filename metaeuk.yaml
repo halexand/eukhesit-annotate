@@ -1,0 +1,5 @@
+name: metaeuk
+channels:
+    - bioconda 
+dependencies:
+    - metaeuk
