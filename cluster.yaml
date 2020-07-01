@@ -19,8 +19,22 @@ __default__:
             nodes: "-N {}"      # ntasks: 24
 
 metaeuk: 
-    queue: scavenger 
+    queue: compute 
     threads: 32
     mem: 130 
     time: 720
-
+train_genemark:
+    queue: compute
+    threads: 4
+    mem: 20
+    time: 720
+run_maker:
+    queue: compute
+    threads: 6
+    mem: 32
+    time: 800
+combine_maker:
+    queue: compute
+    threads: 2
+    mem: 18
+    time: 400
