@@ -1,0 +1,19 @@
+name: genemaker 
+channels:
+    - anaconda
+    - bioconda 
+dependencies:
+    - perl
+    - biopython
+    - perl-app-cpanminus
+    - perl-hash-merge
+    - perl-parallel-forkmanager
+    - perl-scalar-util-numeric
+    - perl-yaml
+    - perl-class-data-inheritable
+    - perl-exception-class
+    - perl-test-pod
+    - perl-file-homedir
+    - perl-file-which
+    - perl-mce
+    - perl-threaded   
