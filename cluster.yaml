@@ -32,9 +32,9 @@ run_maker:
     queue: compute
     threads: 6
     mem: 32
-    time: 800
+    time: 4800
 combine_maker:
     queue: compute
     threads: 2
     mem: 18
-    time: 400
+    time: 800
