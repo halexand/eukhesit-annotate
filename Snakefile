@@ -65,7 +65,7 @@ rule run_maker:
           '''
 
 rule combine_maker:
-    input:'maker2/{magid}.maker.output/{magid}_master_datastore_index.log'
+    input:'maker2/{magid}/{magid}.maker.output/{magid}_master_datastore_index.log'
     output: '{magid}.all.maker.genemark.proteins.fasta','{magid}.all.maker.genemark.transcripts.fasta','{magid}.all.maker.proteins.fasta','{magid}.all.maker.transcripts.fasta'
     params: name='{magid}'
     conda: 'envs/maker2.yaml'
