@@ -8,7 +8,9 @@ TEMP=config['temp_dir']
 IDS, = glob_wildcards("euk-mags/{id}.fa")
 
 rule all:
-	 input: expand("output/{magid}.faa", magid=IDS), expand("output/{magid}.faa.headersMap.tsv", magid=IDS), expand('genemark/{magid}/output/gmhmm.mod', magid=IDS), expand('{magid}.all.maker.genemark.proteins.fasta',magid=IDS)
+	 input: expand("output/{magid}.faa", magid=IDS), expand("output/{magid}.faa.headersMap.tsv", magid=IDS),
+            #expand('genemark/{magid}/output/gmhmm.mod', magid=IDS)
+            expand('maker2/{magid}/{magid}.all.maker.genemark.proteins.fasta',magid=IDS)
 localrules: run_make_dir_maker
 
 rule metaeuk:
@@ -27,14 +29,14 @@ rule metaeuk:
 rule train_genemark:
     input: mag='euk-mags/{magid}.fa'
     output: 'genemark/{magid}/output/gmhmm.mod'
-    params: folder_name='genemark/{magid}', tmpdir='/vortexfs1/scratch/halexander/genemarktmp/{magid}' 
+    params: folder_name='genemark/{magid}', tmpdir='/vortexfs1/scratch/halexander/genemarktmp/{magid}', min_contig=10000
     conda: 'envs/genemaker.yaml'
     shell:'''  
           mkdir -p {params.tmpdir}
           export TMPDIR={params.tmpdir}
           mkdir -p {params.folder_name}
           cd {params.folder_name}
-          /vortexfs1/home/halexander/bin/gm_et_linux_64/gmes_petap.pl --ES -min_contig 5000 --sequence ../../{input.mag}  
+          /vortexfs1/home/halexander/bin/gm_et_linux_64/gmes_petap.pl --ES --min_contig {params.min_contig} --sequence ../../{input.mag}  
           '''
 
 rule run_make_dir_maker:
@@ -52,7 +54,7 @@ rule run_make_dir_maker:
 rule run_maker: 
     input: 
         mag='euk-mags/{magid}.fa',
-        gmes='genemark/{magid}/output/gmhmm.mod',
+        #gmes='genemark/{magid}/output/gmhmm.mod',
         conf=os.path.join('maker2','{magid}','maker_opts.ctl')
     output: 'maker2/{magid}/{magid}.maker.output/{magid}_master_datastore_index.log'
     params: maker_dir=os.path.join('maker2','{magid}'), tmpdir='/vortexfs1/scratch/halexander/maker2tmp/{magid}'
@@ -66,8 +68,8 @@ rule run_maker:
 
 rule combine_maker:
     input:'maker2/{magid}/{magid}.maker.output/{magid}_master_datastore_index.log'
-    output: '{magid}.all.maker.genemark.proteins.fasta','{magid}.all.maker.genemark.transcripts.fasta','{magid}.all.maker.proteins.fasta','{magid}.all.maker.transcripts.fasta'
-    params: name='{magid}'
+    output: 'maker2/{magid}/{magid}.all.maker.genemark.proteins.fasta','maker2/{magid}/{magid}.all.maker.genemark.transcripts.fasta','maker2/{magid}/{magid}.all.maker.proteins.fasta','maker2/{magid}/{magid}.all.maker.transcripts.fasta'
+    params: name='maker2/{magid}/{magid}'
     conda: 'envs/maker2.yaml'
     shell:''' 
           fasta_merge -d {input} -o {params.name}
