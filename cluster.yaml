@@ -38,3 +38,23 @@ combine_maker:
     threads: 2
     mem: 18
     time: 800
+combine_maker_gff3:
+    queue: compute
+    threads: 2
+    mem: 18
+    time: 800
+pfam_scan:
+    queue: compute
+    mem: 8
+    time: 1440
+    threads: 8
+diamond_map: 
+    queue: scavenger
+    threads: 8
+    mem: 16
+    time: 1140
+busco:
+    queue: scavenger
+    threads: 8
+    mem: 16
+    time: 1140
