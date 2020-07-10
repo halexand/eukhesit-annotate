@@ -1,3 +1,11 @@
+genemark/
+kegg/
+euk-mags/
+busco/
+busco_downloads/
+maker2/
+metaeuk/
+pfam/
 *out
 .snakemake/
 logs
