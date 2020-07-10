@@ -14,17 +14,17 @@ BLASTPREFIX = os.path.join(KEGG_DIR, 'blastdb', os.path.split(KEGG_DB)[-1]).stri
 BLASTDB = expand(BLASTPREFIX+'.00.{ext}', ext =["phr", "pin", "psq"])
 BUSCO_GROUP = config['busco_group']
 rule all:
-	 input: #expand("output/{magid}.faa", magid=IDS), expand("output/{magid}.faa.headersMap.tsv", magid=IDS),
-            #expand('genemark/{magid}/output/gmhmm.mod', magid=IDS)
-           # expand('maker2/{magid}/{magid}.all.maker.genemark.proteins.fasta',magid=IDS), expand('maker2/{magid}/{magid}.gff3', magid=IDS), expand('pfam/{magid}.pfam', magid=IDS), expand('kegg/diamond/{magid}.blastp.tab', magid=IDS), 
+	 input: expand("metaeuk/{magid}.faa", magid=IDS), expand("metaeuk/{magid}.faa.headersMap.tsv", magid=IDS),
+            expand('genemark/{magid}/output/gmhmm.mod', magid=IDS)
+            expand('maker2/{magid}/{magid}.all.maker.genemark.proteins.fasta',magid=IDS), expand('maker2/{magid}/{magid}.gff3', magid=IDS), expand('pfam/{magid}.pfam', magid=IDS), expand('kegg/diamond/{magid}.blastp.tab', magid=IDS), 
             expand(os.path.join('busco',BUSCO_GROUP,'{magid}','run_'+BUSCO_GROUP,"full_table.tsv"), magid=IDS)
 localrules: run_make_dir_maker, static_file, configure_busco, download_lineage, download_busco 
 
 rule metaeuk:
 	input: mag=os.path.join(MAGDIR,'{magid}.fa'), db=config['metaeuk_db']
 	output: 
-		faa='output/{magid}.faa',
-		gff='output/{magid}.faa.headersMap.tsv'
+		faa='metaeuk/{magid}.faa',
+		gff='metaeuk/{magid}.faa.headersMap.tsv'
 	params: t = os.path.join(TEMP,'{magid}-tmp'),other = '--protein 1 --threads 16' 
 	conda: "envs/metaeuk.yaml"
 	shell:'''
