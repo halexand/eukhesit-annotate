@@ -1,3 +1,7 @@
+sourmash/
+*ipynb_checkpoints/
+*tsv
+eukcc/
 genemark/
 kegg/
 euk-mags/
