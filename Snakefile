@@ -13,11 +13,40 @@ DIAMOND_OUT = os.path.join(KEGG_DIR, 'diamond_db', os.path.split(KEGG_DB)[-1]).s
 BLASTPREFIX = os.path.join(KEGG_DIR, 'blastdb', os.path.split(KEGG_DB)[-1]).strip('.pep')
 BLASTDB = expand(BLASTPREFIX+'.00.{ext}', ext =["phr", "pin", "psq"])
 BUSCO_GROUP = config['busco_group']
+
+tokill=[]
+with open('tokill', 'r') as f:
+    for l in f:
+        tokill.append(l.strip())
+l3 = [x for x in IDS if x not in tokill]
+IDS=l3
+
+torun=[]
+with open('to-run', 'r') as f:
+    for l in f:
+        torun.append(l.strip())
+#IDS=torun
+
 rule all:
-	 input: expand("metaeuk/{magid}.faa", magid=IDS), expand("metaeuk/{magid}.faa.headersMap.tsv", magid=IDS),
-            expand('genemark/{magid}/output/gmhmm.mod', magid=IDS)
-            expand('maker2/{magid}/{magid}.all.maker.genemark.proteins.fasta',magid=IDS), expand('maker2/{magid}/{magid}.gff3', magid=IDS), expand('pfam/{magid}.pfam', magid=IDS), expand('kegg/diamond/{magid}.blastp.tab', magid=IDS), 
-            expand(os.path.join('busco',BUSCO_GROUP,'{magid}','run_'+BUSCO_GROUP,"full_table.tsv"), magid=IDS)
+	 input: 
+            # METAEUK PREDICTION
+#            expand("metaeuk/{magid}.faa", magid=IDS), 
+#            expand("metaeuk/{magid}.faa.headersMap.tsv", magid=IDS),
+            # GENEMARK
+ #           expand('genemark/{magid}/output/gmhmm.mod', magid=IDS),
+            # MAKER2
+            expand('maker2/{magid}/{magid}.all.maker.proteins.fasta',magid=IDS),
+            expand('maker2/{magid}/{magid}.gff3', magid=IDS), 
+            # PFAM
+            expand('pfam/{magid}.pfam', magid=IDS), 
+            # KEGG
+            expand('kegg/diamond/{magid}.blastp.tab', magid=IDS),expand('kegg/{magid}.kegg_table.tsv', magid=IDS), 
+            # BUSCO 
+            expand(os.path.join('busco',BUSCO_GROUP,'{magid}','run_'+BUSCO_GROUP,"full_table.tsv"), magid=IDS),
+            # EUKCC
+            expand(os.path.join('eukcc','{magid}','done'),magid=IDS), 
+            # SOURMASH
+            expand('sourmash/{magid}.sig', magid=IDS)
 localrules: run_make_dir_maker, static_file, configure_busco, download_lineage, download_busco 
 
 rule metaeuk:
@@ -35,7 +64,7 @@ rule metaeuk:
 rule train_genemark:
     input: mag=os.path.join(MAGDIR,'{magid}.fa')
     output: 'genemark/{magid}/output/gmhmm.mod'
-    params: folder_name='genemark/{magid}', tmpdir='/vortexfs1/scratch/halexander/genemarktmp/{magid}', min_contig=10000
+    params: folder_name='genemark/{magid}', tmpdir='/vortexfs1/scratch/halexander/genemarktmp/{magid}', min_contig=config['genemark_min']
     conda: 'envs/genemaker.yaml'
     shell:'''  
           mkdir -p {params.tmpdir}
@@ -46,7 +75,7 @@ rule train_genemark:
           '''
 
 rule run_make_dir_maker:
-    input: 'genemark/{magid}/output/gmhmm.mod'
+    input: ancient('genemark/{magid}/output/gmhmm.mod')
     output: os.path.join('maker2','{magid}','maker_opts.ctl')
     params: name='{magid}',outdir=os.path.join('maker2','{magid}')
     shell:'''
@@ -59,7 +88,7 @@ rule run_make_dir_maker:
 
 rule run_maker: 
     input: 
-        mag=os.path.join(MAGDIR,'{magid}.fa'), 
+        mag = ancient(os.path.join(MAGDIR,'{magid}.fa')), 
         #gmes='genemark/{magid}/output/gmhmm.mod',
         conf=os.path.join('maker2','{magid}','maker_opts.ctl')
     output: 'maker2/{magid}/{magid}.maker.output/{magid}_master_datastore_index.log'
@@ -182,3 +211,53 @@ rule busco:
         '''
         busco -i {input.fastafile} -f -l {params.busco_level} -m protein --cpu {params.CPUs} --config {input.config} --offline 
         '''
+
+rule gff3_to_bed:
+    input: 'maker2/{magid}/{magid}.gff3'
+    output: 'eukcc/{magid}/{magid}.bed'
+    conda:
+        'envs/eukcc.yaml'
+    shell:
+        '''
+        gff2bed < {input} > {output}
+        '''
+
+rule download_eukcc_db:
+    output: directory(config['eukcc_db'])
+    shell:
+        '''
+        wget http://ftp.ebi.ac.uk/pub/databases/metagenomics/eukcc/eukcc_db_v1.1.tar.gz
+        tar -xzvf eukcc_db_v1.1.tar.gz
+        mv eukcc_db_20191023_1  {output}
+        '''
+
+rule eukcc_protein:
+    input: pep = 'maker2/{magid}/{magid}.all.maker.proteins.fasta', 
+#           bed = 'eukcc/{magid}/{magid}.bed'
+            db = config['eukcc_db']
+    output: 'eukcc/{magid}/done'
+    params: outdir = 'eukcc/{magid}'
+    conda:
+        'envs/eukcc.yaml'
+    shell:
+        ''' 
+        eukcc --db {input.db} -o {params.outdir} --protein {input.pep} --ncores 8 || true
+        touch {output} 
+        '''
+rule kegg_annot:
+    input: 'kegg/diamond/{magid}.blastp.tab'
+    output: 'kegg/{magid}.kegg_table.tsv'
+    params:
+        kegg = KEGG_DIR
+    conda:
+        'envs/kegg-annot.yaml'
+    shell:
+        """
+        keggannot_genes2ko {params.kegg} {input} -o {output}   
+        """
+rule sourmash_sig:
+        input: mag=os.path.join(MAGDIR,'{magid}.fa'),
+        output: 'sourmash/{magid}.sig'
+        conda: "envs/sourmash.yaml"
+        shell: "sourmash compute --scaled 1000 -k 31 -o {output} {input.mag}"
+

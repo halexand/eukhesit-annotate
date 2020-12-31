@@ -5,3 +5,5 @@ mag_dir: ../euk-mags
 temp_dir: /vortexfs1/scratch/halexander/metaeuk/tempdir
 metaeuk_db: /vortexfs1/scratch/halexander/metaeuk/MMETSP_uniclust50_MERC
 busco_group: eukaryota_odb10
+eukcc_db: /vortexfs1/omics/alexander/data/databases/eukccdb
+genemark_min: 5000 

@@ -29,12 +29,12 @@ train_genemark:
     mem: 20
     time: 720
 run_maker:
-    queue: compute
+    queue: scavenger 
     threads: 6
     mem: 32
     time: 4800
 combine_maker:
-    queue: compute
+    queue: scavenger 
     threads: 2
     mem: 18
     time: 800
@@ -43,13 +43,13 @@ combine_maker_gff3:
     threads: 2
     mem: 18
     time: 800
-pfam_scan:
-    queue: compute
+pfam:
+    queue: scavenger
     mem: 8
     time: 1440
     threads: 8
 diamond_map: 
-    queue: scavenger
+    queue: scavenger 
     threads: 8
     mem: 16
     time: 1140
@@ -58,3 +58,18 @@ busco:
     threads: 8
     mem: 16
     time: 1140
+eukcc_protein:
+    queue: bigmem 
+    threads: 12
+    mem: 300
+    time: 300
+kegg_annot:
+    queue: scavenger 
+    threads: 1
+    mem: 16
+    time: 400
+sourmash_sig:
+    queue: scavenger
+    threads: 1
+    mem: 4
+    time: 60    
